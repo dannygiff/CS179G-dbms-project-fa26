@@ -1,7 +1,7 @@
 /data
 .dat
 .bin
-
+/src/crawler/tutorial
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
