@@ -6,7 +6,7 @@ class SteamReviewSpider(scrapy.Spider):
     name = "steam_reviews"
     allowed_domains = ["api.steampowered.com"]
 
-    # if this works I'll be mad
+    # we need this to avoid being redirected
     custom_settings = {
         'ROBOTSTXT_OBEY': False
     }
