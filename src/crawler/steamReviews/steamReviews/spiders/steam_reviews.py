@@ -31,7 +31,7 @@ class SteamReviewSpider(scrapy.Spider):
             "num_per_page": min(100, self.max_reviews), # 100/page limit
             "filter": "all",
             "language": "english",
-            # "json": 1  # Hyrum: This param is unnecessary ifaict (not in docs, works without)
+            "json": 1
         }
         request_params = {"input_json": json.dumps(params)}
 
