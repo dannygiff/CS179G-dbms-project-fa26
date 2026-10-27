@@ -1,7 +1,9 @@
 /data
 .dat
 .bin
-
+/src/crawler/tutorial
+/src/crawler/steamReviews/*.json
+/src/crawler/steamReviews/*.jsonl
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
