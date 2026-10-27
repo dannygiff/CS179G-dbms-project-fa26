@@ -19,7 +19,7 @@ class SteamReviewSpider(scrapy.Spider):
         self.max_reviews = int(max_reviews)
 
     async def start(self):
-        self.logger.info(">>>>>>>>starting requests...")
+        # self.logger.info(">>>>>>>>starting requests...")
         # the new steam review endpoint (thanks steam)
         base_url = "https://api.steampowered.com/IUserReviewsService/GetAppReviews/v1"
 
@@ -31,7 +31,7 @@ class SteamReviewSpider(scrapy.Spider):
             "num_per_page": min(100, self.max_reviews), # 100/page limit
             "filter": "all",
             "language": "english",
-            "json": 1
+            # "json": 1  # Hyrum: This param is unnecessary ifaict (not in docs, works without)
         }
         request_params = {"input_json": json.dumps(params)}
 
