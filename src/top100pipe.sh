@@ -5,6 +5,7 @@
 BASE=/home/cs179g/repo                         # root of the project checkout
 ID_FILE=$BASE/data/top_seller_app_ids.txt      # app ids to crawl, one per line
 MAX_REVIEWS=10000                              # reviews per game
+export PATH=/home/cs179g/miniconda3/envs/spark_env/bin:$PATH
 
 # ---- derived paths: no need to change ----
 DATA_DIR=$BASE/data
