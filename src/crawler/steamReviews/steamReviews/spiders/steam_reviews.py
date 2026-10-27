@@ -32,6 +32,7 @@ class SteamReviewSpider(scrapy.Spider):
             "num_per_page": min(100, self.max_reviews), # 100/page limit
             "day_range": 0,
             "filter": 0, # 0 => Helpful, 1 => Recent, 2 => Updated, 3 => Funny
+            "purchase_type": 1, # 0 => Steam only, 1 => All, 2 => Non-Steam only
             "languages": ["english"],
         }
         request_params = {"input_json": json.dumps(params)}
@@ -75,6 +76,7 @@ class SteamReviewSpider(scrapy.Spider):
                 "num_per_page": min(100, self.max_reviews - self.current_reviews),
                 "day_range": 0,
                 "filter": 0, # 0 => Helpful, 1 => Recent, 2 => Updated, 3 => Funny
+                "purchase_type": 1, # 0 => Steam only, 1 => All, 2 => Non-Steam only
                 "languages": ["english"]
             }
             request_params = {"input_json": json.dumps(params)}
