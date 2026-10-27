@@ -17,6 +17,7 @@ class SteamReviewSpider(scrapy.Spider):
         super().__init__(*args, **kwargs)
         self.app_id = int(app_id)
         self.max_reviews = int(max_reviews)
+        self.current_reviews = 0
 
     async def start(self):
         # self.logger.info(">>>>>>>>starting requests...")
@@ -30,8 +31,7 @@ class SteamReviewSpider(scrapy.Spider):
             "cursor": "*",
             "num_per_page": min(100, self.max_reviews), # 100/page limit
             "filter": "all",
-            "language": "english",
-            # "json": 1  # Hyrum: This param is unnecessary ifaict (not in docs, works without)
+            "languages": ["english"],
         }
         request_params = {"input_json": json.dumps(params)}
 
@@ -50,7 +50,29 @@ class SteamReviewSpider(scrapy.Spider):
 
         # can itemize the yielded data here with json tags
         data = json.loads(response.text)
-        yield{
-            "app_id" : self.app_id,
-            "response": data
-        }
+
+        response_data = data["response"]
+
+        qs = response_data["query_summary"]
+        if qs.get("total_reviews") is not None:
+            self.max_reviews = min(qs["total_reviews"], self.max_reviews)
+        self.current_reviews += qs["num_reviews"]
+
+        yield from response_data["reviews"]
+
+        if self.current_reviews < self.max_reviews:
+            cursor = response_data["cursor"]
+            params = {
+                "appid": self.app_id,
+                "cursor": cursor,
+                "num_per_page": min(100, self.max_reviews - self.current_reviews),
+                "filter": "all",
+                "languages": ["english"]
+            }
+            request_params = {"input_json": json.dumps(params)}
+            base_url = "https://api.steampowered.com/IUserReviewsService/GetAppReviews/v1"
+            target_url = f"{base_url}?{urllib.parse.urlencode(request_params)}"
+            yield scrapy.Request(
+                url = target_url,
+                callback = self.parse
+            )
