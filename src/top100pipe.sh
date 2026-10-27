@@ -1,31 +1,27 @@
-cd /home/cs179g/repo/data
+# Crawls reviews for every app id in ID_FILE and combines them into FINAL_FILE.
+# To test in your own folder, change BASE (and ID_FILE / MAX_REVIEWS) below.
 
-echo "[" > top100.json
+# ---- settings: change these ----
+BASE=/home/cs179g/repo                         # root of the project checkout
+ID_FILE=$BASE/data/top_seller_app_ids.txt      # app ids to crawl, one per line
+MAX_REVIEWS=10000                              # reviews per game
+
+# ---- derived paths: no need to change ----
+DATA_DIR=$BASE/data
+CRAWLER_DIR=$BASE/src/crawler/steamReviews     # scrapy must be run from here
+OUTPUT_FILE=$DATA_DIR/output.json              # one game's reviews (overwritten each loop)
+FINAL_FILE=$DATA_DIR/top100.json               # all games combined
+
+cd "$CRAWLER_DIR"
+
+echo "[" > "$FINAL_FILE"
 while read p; do
-  cd /home/cs179g/repo/src/crawler/steamReviews
-  scrapy crawl steam_reviews -O /home/cs179g/repo/data/output.json -a max_reviews=10000 -a app_id=$p
-  cd /home/cs179g/repo/data
-  echo "{\"app_id\": $p," >> top100.json
-  echo "\"response\": [" >> top100.json
-  sed '1d;$d' output.json >> top100.json
-  echo "]}," >> top100.json
-done </home/cs179g/repo/data/top_seller_app_ids.txt
-sed -i '$ s/,$//' top100.json  # turn the last "]}," into "]}"
-echo "]" >> top100.json        # close the list
-
-# Change the paths to your own, comment out above (for testing in your own folder)
-
-# cd /home/cs179g/working/whore_hey/CS179G-dbms-project-fa26/data
-
-# echo "[" > top100.json
-# while read p; do
-#   cd /home/cs179g/working/whore_hey/CS179G-dbms-project-fa26/src/crawler/steamReviews
-#   scrapy crawl steam_reviews -O /home/cs179g/working/whore_hey/CS179G-dbms-project-fa26/data/output.json -a max_reviews=1 -a app_id=$p
-#   cd /home/cs179g/working/whore_hey/CS179G-dbms-project-fa26/data
-#   echo "{\"app_id\": $p," >> top100.json
-#   echo "\"response\": [" >> top100.json
-#   sed '1d;$d' output.json >> top100.json
-#   echo "]}," >> top100.json
-# done </home/cs179g/working/whore_hey/CS179G-dbms-project-fa26/data/three_ids.txt
-# sed -i '$ s/,$//' top100.json  # turn the last "]}," into "]}"
-# echo "]" >> top100.json        # close the list
+  rm -f "$OUTPUT_FILE"                         # so a failed crawl can't reuse the last game's file
+  scrapy crawl steam_reviews -O "$OUTPUT_FILE" -a max_reviews=$MAX_REVIEWS -a app_id=$p
+  echo "{\"app_id\": $p," >> "$FINAL_FILE"
+  echo "\"response\": [" >> "$FINAL_FILE"
+  sed '1d;$d' "$OUTPUT_FILE" >> "$FINAL_FILE"
+  echo "]}," >> "$FINAL_FILE"
+done < "$ID_FILE"
+sed -i '$ s/,$//' "$FINAL_FILE"                # turn the last "]}," into "]}"
+echo "]" >> "$FINAL_FILE"                      # close the list
