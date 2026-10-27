@@ -30,6 +30,7 @@ class SteamReviewSpider(scrapy.Spider):
             "appid": self.app_id,
             "cursor": "*",
             "num_per_page": min(100, self.max_reviews), # 100/page limit
+            "day_range": 0,
             "filter": "all",
             "languages": ["english"],
         }
@@ -55,8 +56,14 @@ class SteamReviewSpider(scrapy.Spider):
 
         qs = response_data["query_summary"]
         if qs.get("total_reviews") is not None:
+            tr = qs["total_reviews"]
+            # self.logger.info(f">>>>>>>>>>>>> found total_reviews: {tr}")
             self.max_reviews = min(qs["total_reviews"], self.max_reviews)
         self.current_reviews += qs["num_reviews"]
+
+        if response_data.get('reviews') is None:
+            self.logger.info("response contained no reviews")
+            return;
 
         yield from response_data["reviews"]
 
@@ -66,6 +73,7 @@ class SteamReviewSpider(scrapy.Spider):
                 "appid": self.app_id,
                 "cursor": cursor,
                 "num_per_page": min(100, self.max_reviews - self.current_reviews),
+                "day_range": 0,
                 "filter": "all",
                 "languages": ["english"]
             }
