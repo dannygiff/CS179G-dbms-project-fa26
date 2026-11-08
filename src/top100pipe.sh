@@ -3,14 +3,15 @@
 
 # ---- settings: change these ----
 BASE=/home/cs179g/repo                         # root of the project checkout
-ID_FILE=$BASE/data/top_seller_app_ids.txt      # app ids to crawl, one per line
-MAX_REVIEWS=10000                              # reviews per game
+ID_FILE=$BASE/data/top_seller_app_ids.txt     # app ids to crawl, one per line
+MAX_REVIEWS=15000                             # reviews per game
+export PATH=/home/cs179g/miniconda3/envs/spark_env/bin:$PATH
 
 # ---- derived paths: no need to change ----
 DATA_DIR=$BASE/data
 CRAWLER_DIR=$BASE/src/crawler/steamReviews     # scrapy must be run from here
-OUTPUT_FILE=$DATA_DIR/output.json              # one game's reviews (overwritten each loop)
-FINAL_FILE=$DATA_DIR/top100.json               # all games combined
+OUTPUT_FILE=$DATA_DIR/output_v2.json              # one game's reviews (overwritten each loop)
+FINAL_FILE=$DATA_DIR/data_v2.json               # all games combined
 
 cd "$CRAWLER_DIR"
 
