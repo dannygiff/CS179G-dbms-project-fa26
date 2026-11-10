@@ -2,15 +2,23 @@ from pathlib import Path
 from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
 
-data_path = "./data/over_100k_games_reviews.json"
+# data_path = "./data/over_100k_games_reviews.json"
+data_path = "./data/data_v2.json"
 
-spark = SparkSession.builder.appName("Phase2").getOrCreate()
+spark = (
+  SparkSession.builder
+  .appName("Phase2")
+  .config("spark.driver.memory", "8g")
+  .config("spark.executor.memory", "8g")
+  .config("spark.sql.debug.maxToStringFields", "100")
+  .getOrCreate()
+)
 
 raw_df = spark.read.option("multiLine", True).option("mode", "PERMISSIVE")\
   .format("json").load(data_path)\
   # .withColumn("app_id", F.regexp_extract(F.col("_corrupt_record"),r'"app_id":([0-9]+)', 1))
 
-exploded_response_df = raw_df.withColumn('response',F.explode(F.col("response"))).select("*", "response.*").drop("response")
+exploded_response_df = raw_df.withColumn('response',F.explode(F.col("response"))).select("*", "response.*").drop("response").repartition(4)
 # response_df = df.groupBy("app_id").pivot("response.key").agg(F.first("response.val"))
 
 flat_df = exploded_response_df.select(
@@ -62,10 +70,11 @@ clean_df = (
   .filter(F.length("clean_text") > 0)
   .withColumn("raw_word_count", F.size(F.split(F.col("clean_text"), r"\s+")))
   .withColumn("post_review_playtime", F.greatest(F.lit(0), F.col("playtime_forever") - F.col("playtime_at_review")))
-  .withColumn("timestamp_formatted", F.from_unixtime(F.col("timestamp_created"), "yyyy-MM-DD"))
+  .withColumn("timestamp_formatted", F.from_unixtime(F.col("timestamp_created"), "yyyy-MM-dd"))
 )
+clean_df.write.mode("overwrite").parquet("./data/clean_reviews.parquet")
 
-clean_df.groupBy("app_id").count().orderBy("app_id").show(truncate=False)
+clean_df.groupBy("app_id").count().orderBy("count").show(truncate=False)
 print(f"Total clean reviews: {clean_df.count()}")
 has_up = F.col("votes_up") > 0
 has_funny = F.col("votes_funny") > 0
