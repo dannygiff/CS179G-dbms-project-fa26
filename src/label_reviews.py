@@ -5,7 +5,7 @@ from bertopic import BERTopic
 import numpy as np
 from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
-from pyspark.sql.types import IntegerType, FloatType
+from pyspark.sql.types import StructType, StructField, IntegerType, FloatType
 
 MODEL_PATH = "/home/cs179g/repo/data/BERTopicModel"
 INPUT_PARQUET = "/home/cs179g/repo/data/clean_reviews.parquet"
@@ -41,15 +41,15 @@ topic_lookup_df = (
 # load reviews
 review_df = (
     spark.read.parquet(INPUT_PARQUET)
-    .withColumn("review", F.coalesce(F.col("review"), F.lit("")))
+    .withColumn("clean_text", F.coalesce(F.col("clean_text"), F.lit("")))
 )
 
 # define output schema
-output_schema = (
-    review_df.schema
-    .add("topic_id", IntegerType(), True)
-    .add("topic_prob", FloatType(), True)
-)
+output_schema = StructType(
+    list(review_df.schema.fields) + [
+        StructField("topic_id", IntegerType(), True),
+        StructField("topic_prob", FloatType(), True),
+    ])
 
 # the big thing
 # uses iterators and partitions to process the large review set in batches
@@ -61,7 +61,7 @@ def assign_topics(iterator: Iterator[pd.DataFrame]) -> Iterator[pd.DataFrame]:
         if pdf.empty:
             continue
             
-        docs = pdf["review"].astype(str).tolist()
+        docs = pdf["clean_text"].astype(str).tolist()
         topics, probs = model.transform(docs)
 
         # we explicitly pass the type to avoid a schema mismatch error from pandas
