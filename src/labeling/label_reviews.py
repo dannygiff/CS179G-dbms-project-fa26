@@ -67,7 +67,7 @@ def assign_topics(iterator: Iterator[pd.DataFrame]) -> Iterator[pd.DataFrame]:
         # we explicitly pass the type to avoid a schema mismatch error from pandas
         pdf["topic_id"] = pd.Series(topics, index=pdf.index, dtype="int32")
         pdf["topic_id"] = np.asarray(topics, dtype="int32")
-        pdf["topic_prob"] = probs.max(axis=1).astype("float32")
+        pdf["topic_prob"] = probs.astype("float32")
             
         yield pdf
 
