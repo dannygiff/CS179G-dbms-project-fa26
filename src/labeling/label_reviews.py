@@ -8,7 +8,7 @@ from pyspark.sql import functions as F
 from pyspark.sql.types import StructType, StructField, IntegerType, FloatType
 
 MODEL_PATH = "/home/cs179g/repo/data/BERTopicModel"
-INPUT_PARQUET = "/home/cs179g/repo/data/clean_reviews.parquet"
+INPUT_PARQUET = "/home/cs179g/repo/data/clean_reviews.parquet" # update this 
 OUTPUT_PARQUET = "/home/cs179g/repo/data/labeled_reviews.parquet"
 
 # build spark session
