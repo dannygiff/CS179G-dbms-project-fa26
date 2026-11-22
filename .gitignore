@@ -4,6 +4,7 @@
 /src/crawler/tutorial
 /src/crawler/steamReviews/*.json
 /src/crawler/steamReviews/*.jsonl
+.zed/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
