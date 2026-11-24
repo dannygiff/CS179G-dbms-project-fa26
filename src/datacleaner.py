@@ -1,20 +1,25 @@
 from pathlib import Path
+
 from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
 
-def clean_data(data_path="/home/cs179g/repo/data/cs_reviews.jsonl", outpath="../data/clean_reviews.parquet"):
+
+def clean_data(
+    data_path="/home/cs179g/repo/data/cs_reviews.jsonl",
+    outpath="/home/cs179g/repo/data/clean_reviews.parquet",
+):
+
+    data_path
     spark = (
-      SparkSession.builder
-      .appName("Phase2")
-      .config("spark.driver.memory", "8g")
-      .config("spark.executor.memory", "8g")
-      .config("spark.sql.debug.maxToStringFields", "100")
-      .getOrCreate()
+        SparkSession.builder.appName("Phase2")
+        .config("spark.driver.memory", "8g")
+        .config("spark.executor.memory", "8g")
+        .config("spark.sql.debug.maxToStringFields", "100")
+        .getOrCreate()
     )
 
-    raw_df = spark.read.option("mode", "PERMISSIVE")\
-      .format("json").load(data_path)\
-      # .withColumn("app_id", F.regexp_extract(F.col("_corrupt_record"),r'"app_id":([0-9]+)', 1))
+    raw_df = spark.read.option("mode", "PERMISSIVE").format("json").load(data_path)
+    # .withColumn("app_id", F.regexp_extract(F.col("_corrupt_record"),r'"app_id":([0-9]+)', 1))
 
     # exploded_response_df = raw_df.withColumn('response',F.explode(F.col("response"))).select("*", "response.*").drop("response").repartition(4)
     # response_df = df.groupBy("app_id").pivot("response.key").agg(F.first("response.val"))
@@ -22,35 +27,35 @@ def clean_data(data_path="/home/cs179g/repo/data/cs_reviews.jsonl", outpath="../
     # raw_df.printSchema()
 
     flat_df = raw_df.select(
-      "recommendationid",
-      # F.col("author.deck_playtime_at_review").alias("deck_playtime_at_review"),
-      F.col("author.last_played").alias("last_played"),
-      F.col("author.num_reviews").alias("author_num_reviews"),
-      F.col("author.playtime_forever").alias("playtime_forever"),
-      F.col("author.playtime_at_review").alias("playtime_at_review"),
-      F.col("author.playtime_last_two_weeks").alias("playtime_last_two_weeks"),
-      F.col("author.steamid").alias("steamid"),
-      "language",
-      "comment_count",
-      "steam_purchase",
-      # "primarily_steam_deck",
-      "received_for_free",
-      "refunded",
-      "review",
-      "voted_up",
-      "votes_up",
-      "votes_funny",
-      "weighted_vote_score",
-      # F.col("developer_response").isNotNull().alias("has_dev_reponse"),
-      "written_during_early_access",
-      "timestamp_created",
-      "timestamp_updated",
-      F.col("hardware").isNotNull().alias("has_hardware"),
-      F.col("hardware.adapter_description").alias("adapter_description"),
-      F.col("hardware.cpu_name").alias("cpu_name"),
-      F.col("hardware.os").alias("os"),
-      F.col("hardware.system_ram").alias("system_ram"),
-      F.col("hardware.vram_size").alias("vram_size"),
+        "recommendationid",
+        # F.col("author.deck_playtime_at_review").alias("deck_playtime_at_review"),
+        F.col("author.last_played").alias("last_played"),
+        F.col("author.num_reviews").alias("author_num_reviews"),
+        F.col("author.playtime_forever").alias("playtime_forever"),
+        F.col("author.playtime_at_review").alias("playtime_at_review"),
+        F.col("author.playtime_last_two_weeks").alias("playtime_last_two_weeks"),
+        F.col("author.steamid").alias("steamid"),
+        "language",
+        "comment_count",
+        "steam_purchase",
+        # "primarily_steam_deck",
+        "received_for_free",
+        "refunded",
+        "review",
+        "voted_up",
+        "votes_up",
+        "votes_funny",
+        "weighted_vote_score",
+        # F.col("developer_response").isNotNull().alias("has_dev_reponse"),
+        "written_during_early_access",
+        "timestamp_created",
+        "timestamp_updated",
+        F.col("hardware").isNotNull().alias("has_hardware"),
+        F.col("hardware.adapter_description").alias("adapter_description"),
+        F.col("hardware.cpu_name").alias("cpu_name"),
+        F.col("hardware.os").alias("os"),
+        F.col("hardware.system_ram").alias("system_ram"),
+        F.col("hardware.vram_size").alias("vram_size"),
     ).cache()
 
     # flat_df.show(5)
@@ -63,13 +68,20 @@ def clean_data(data_path="/home/cs179g/repo/data/cs_reviews.jsonl", outpath="../
     # print((df.count()), len(df.columns()))
 
     clean_df = (
-      flat_df
-      .filter((F.col("language") == "english") & F.col("review").isNotNull())
-      .withColumn("clean_text", F.btrim(F.col("review")))
-      .filter(F.length("clean_text") > 0)
-      .withColumn("raw_word_count", F.size(F.split(F.col("clean_text"), r"\s+")))
-      .withColumn("post_review_playtime", F.greatest(F.lit(0), F.col("playtime_forever") - F.col("playtime_at_review")))
-      .withColumn("timestamp_formatted", F.from_unixtime(F.col("timestamp_created"), "yyyy-MM-dd"))
+        flat_df.filter((F.col("language") == "english") & F.col("review").isNotNull())
+        .withColumn("clean_text", F.btrim(F.col("review")))
+        .filter(F.length("clean_text") > 0)
+        .withColumn("raw_word_count", F.size(F.split(F.col("clean_text"), r"\s+")))
+        .withColumn(
+            "post_review_playtime",
+            F.greatest(
+                F.lit(0), F.col("playtime_forever") - F.col("playtime_at_review")
+            ),
+        )
+        .withColumn(
+            "timestamp_formatted",
+            F.from_unixtime(F.col("timestamp_created"), "yyyy-MM-dd"),
+        )
     )
     clean_df.write.mode("overwrite").parquet(outpath)
 
